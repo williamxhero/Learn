@@ -1,3 +1,4 @@
+（文章开始）
 # 从头说起
 
 Lanchain的结构设计非常精妙，分析过源码后，受益匪浅。我在这里尝试从头开始，记录下Lanchain的设计思路和用法，希望能达到知其然并知其所以然的效果，在以后使用的时候，可以更加得心应手。
@@ -22,8 +23,6 @@ Chain 里有一个 memory 变量，memory变量主要作用是保存上次调用
 1. 预备 inputs：检查 inputs 合法性。
 2. 用 inputs 调用 `_call()` 函数：这是一个虚函数，子类必须实现，返回 `dict`作为 outputs。
 3. 预备 outputs：检查 outputs 合法性，将 inputs 和 outputs 合并成一个 `dict`，返回出去。
-
-如果没有设定memory，则1.和3.都不执行，等于是只调用`_call()`函数和检查输入输出合法性。
 
 这么看来，Chain本身其实只是个规范，就是所有可执行类，如果统一复写 `_call()` 函数，解析inputs，提供outputs，就可以在更大的框架里可以发挥价值。比如所有Chain类可以真的chain起来，因为输入输出都是`dict`，所以可以这样：
 ```ptyhon
@@ -54,7 +53,7 @@ outputs = chain_f(chain_e(chain_d(chain_c(chain_b(chain_a(inputs))))))
 
 Memory有一个最简单的可用的实现类，叫 `ConversationStringBufferMemory`。虽然名字长，但机理很简单：
 * `save_context(inputs, outputs)`：把 inputs 中的值搞成 "Human: {input}\n"，把 outputs 的值搞成 "AI: {output}\n"，添加到一个字符串后面，于是几次回合后，这个字符串就变成了这个样子：
-	```
+	```text
 	Human: 第一次输入的内容
 	AI: 第一次回答内容
 	Human: 第二次输入的内容
@@ -141,7 +140,7 @@ for i in range(3):
     print(outputs)
 
 ```
-最后输入是这样的：
+最后输出是这样的：
 
 ```Json
 {'input': '15256240', 'history': '', 'output': 'fvqkXXYK'}
@@ -168,6 +167,10 @@ AI: fvqkXXYK
 Human: 74587513
 AI: usZTTCeA
 ```
-那个，这些个 inputs，outputs，以及 history，都怎么用呢？下次再说吧。
+那么，这些个 inputs，outputs，以及 history，都怎么用呢？下次再说吧。
 
 Lesson 2: [说说LLM和Prompt](lesson2.md)
+
+（文章结束）
+
+帮我修缮一下上面的内容，改地更易懂一些，平易近人一些，以及错别字修改
