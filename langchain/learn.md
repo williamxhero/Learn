@@ -1,5 +1,5 @@
 ## BaseMemory
-> 用填充input keys，保存inputs，outputs
+> 用 inputs 填充 input keys，保存 inputs，outputs
 
 `load_memory_variables( inputs: Dict ) -> Dict` 
 
@@ -26,24 +26,20 @@
 `output_keys()` -> `List`： = 0 
 * 当`__call__()` -> `outputs` 返回时，`outputs`比 `output_keys` 只多不少
 
-`_call()`：= 0
-* `inputs: Dict` -> `Dict`
-* `run_manager`由`__call__`保证创建
+**`run()`**：单返版
+* [in] `inputs: *arg|**kwargs`
+* 调用 `__call__`，只返回 `output_keys[0]` 对应的值
+* [out] `str`
 
-**`run()`**：
-* `inputs: *arg | **kwargs` -> `str`
-* 调用 `__call__`，只返回`output_keys[0]`对应的值
+**`apply()`**：“并行”版
+* [in]`input_list` : `List[Dict]` 
+* 用每一个 input 调用`__call__` 收集所有返回值
+* [out] `List[Dict]`
 
-**`apply()`**：
-* `input_list: List[Dict]` -> `List[Dict]`
-* 用每一个input 调用`__call__` 收集所有返回值
-* input 是一个 list [ Dict ]
-* output 是一个 list [ Dict ]
 
-**`__call__()`**：
-* `inputs: Dict|any` -> `Dict`
-* `inputs` 必须指定 key-value
-* `outputs` 包含 `inputs` 和 `outputs`，如果 设定 `return_only_outputs` 则只返回 `outputs`
+**`__call__()`**：直接调用版 `chain_obj(...)`
+* [in] `inputs: Dict|any` 必须指定 key-value
+* [out] `Dict` 糅合 `inputs` 和 `outputs`，如果 设定 `return_only_outputs` 则只返回 `outputs`
 * `memory` 和 `callback` 在这里被调用
 * `prep_inputs(inputs)` -> `inputs` 
   * 如果是一个`string`参数，则做成`list`
@@ -56,14 +52,18 @@
   * 有 `memory`，调用 `memory.save_context(inputs, outputs)`
   * 融合 `inputs` 和 `outputs`，如果 设定了`return_only_outputs` 则只返回 `outputs`
 
+`_call()`：= 0 最终执行函数
+* `inputs: Dict` -> `Dict`
+* `run_manager` 由 `__call__` 保证创建，所以其实可以不用做检查
+
 ---
 ## LLMCHain (Chain)
-> 一个LLMCHain，对应一个prompt，只有内部memory起作用。所以谁有prompt，谁才需要有memory
-* `prompt` 提示语
-* `llm` 语言模型
-* `input_keys` 直接返回 `prompt.input_variables`
-* `output_key` "text"
-* `output_keys`： `[output_key]`
+> 一个LLMCHain，对应一个prompt。谁有prompt，谁才需要有memory
+* `prompt` : `BasePromptTemplate`
+* `llm` : `BaseLanguageModel`
+* `input_keys` -> `prompt.input_variables`
+* `output_key` : "text"
+* `output_keys`：`[output_key]`
 
 ### 执行函数：
 **`predict()`**： 
@@ -73,19 +73,40 @@
 **`apply()`**：
 * 功能复刻 `__call__` -> `_call`，但不支持 `memory`
 
-`_call()`：
-* 调用 `generate`，只传入一个 input，只接收一个 output
+`_call()`:
+* [in] `inputs` : `Dict`
+* `generate()`
+* [out] `Dict`
 
 `generate()`：
-* 接收`list`，返回`list`
-* 调用 `prep_prompts`，用`inputs`填充`prompts`
-* 调用 `llm.generate_prompt` 生成内容
+* 接收`list` (key, value)，返回`LLMResult`
+* `prep_prompts()`，用`inputs`填充`prompts`
+  * `prompt.format_prompt(intputs)`
+* `llm.generate_prompt()` 生成内容
 
+---
+
+## BasePromptTemplate
+### PromptValue.to_string() -> str
+
+`format_prompt(**kwargs)` -> `PromptValue`
+  * kwargs 是所有 inputs（key-value）
+  * 
+
+`format()` -> `str`
+
+## BaseChatPromptTemplate (BasePromptTemplate)
+> 将 format_prompt() 和 format() 转发为 format_messages()
+
+`format_messages()` = 0
+
+## ChatPromptTemplate (BaseChatPromptTemplate)
+
+`format_messages()`
 
 ---
 ## BaseLanguageModel
 `generate_prompt()` ：
-
 
 ---
 ## AgentExecutor (Chain)
@@ -116,7 +137,10 @@ prompt 属于 Agent
   * `llm_chain.predict()`： 
   * `output_parser.parse()`： 
 
+`get_full_inputs()`： 
+  * `_construct_scratchpad()`： 将历史 action / observation 连接起来
 
+`_construct_scratchpad()`： 
 
 ---
 ## StructuredChatAgent
@@ -125,7 +149,7 @@ prompt 属于 Agent
 
 ### 执行函数：
 `_construct_scratchpad()`： 
-
+  * 一段对历史记录的描述 + `super()._construct_scratchpad()`
 
 ---
 ## BaseTool
