@@ -79,7 +79,7 @@
 * [out] `Dict`
 
 `generate()`：
-* 接收`list` (key, value)，返回`LLMResult`
+* 接收`list[dict]`，返回`LLMResult`
 * `prep_prompts()`，用`inputs`填充`prompts`
   * `prompt.format_prompt(intputs)`
 * `llm.generate_prompt()` 生成内容
